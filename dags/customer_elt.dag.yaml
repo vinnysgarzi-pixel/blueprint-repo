@@ -43,4 +43,6 @@ steps:
     depends_on: [validate_orders]
     trigger_rule: all_done
     slack_webhook_conn_id: slack_default
-    message: "customer_elt finished for {{ ds }} (status: {{ dag_run.get_state() }})"
+    # {% raw %} keeps Airflow's runtime template vars (ds, etc.) intact through
+    # Blueprint's build-time Jinja rendering, so Airflow resolves them per run.
+    message: "{% raw %}customer_elt finished for {{ ds }}{% endraw %}"

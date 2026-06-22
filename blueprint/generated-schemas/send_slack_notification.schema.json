@@ -7,7 +7,7 @@
       "type": "string"
     },
     "message": {
-      "description": "Message text. Supports Jinja, e.g. `Pipeline finished for {{ ds }}`.",
+      "description": "Message text. For Airflow runtime template vars, wrap them in {% raw %}...{% endraw %} so Blueprint's build-time Jinja leaves them for Airflow to render per run, e.g. `{% raw %}Pipeline finished for {{ ds }}{% endraw %}`.",
       "title": "Message",
       "type": "string"
     },
