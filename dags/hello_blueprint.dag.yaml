@@ -1,0 +1,14 @@
+dag_id: hello_blueprint
+schedule: "@daily"
+
+# Zero-setup smoke test: no connections required. Trigger this DAG to confirm
+# Blueprint is wired up end to end before configuring any warehouses.
+steps:
+  say_hello:
+    blueprint: run_bash
+    bash_command: "echo 'Hello from Blueprint!'"
+
+  compute_in_python:
+    blueprint: run_python
+    depends_on: [say_hello]
+    code: "print('sum of 0..9 =', sum(range(10)))"

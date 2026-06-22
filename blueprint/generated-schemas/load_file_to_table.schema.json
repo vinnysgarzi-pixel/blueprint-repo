@@ -1,0 +1,98 @@
+{
+  "properties": {
+    "conn_id": {
+      "description": "Airflow connection ID for the target warehouse.",
+      "title": "Conn Id",
+      "type": "string"
+    },
+    "source_uri": {
+      "description": "Location of the source data, e.g. `s3://my-bucket/path/` or a named stage.",
+      "title": "Source Uri",
+      "type": "string"
+    },
+    "target_table": {
+      "description": "Fully-qualified destination table, e.g. `analytics.orders`.",
+      "title": "Target Table",
+      "type": "string"
+    },
+    "dialect": {
+      "default": "snowflake",
+      "description": "Warehouse SQL dialect used to build the COPY statement.",
+      "enum": [
+        "snowflake",
+        "redshift",
+        "postgres"
+      ],
+      "title": "Dialect",
+      "type": "string"
+    },
+    "file_format": {
+      "default": "csv",
+      "description": "Format of the source files.",
+      "enum": [
+        "csv",
+        "parquet",
+        "json"
+      ],
+      "title": "File Format",
+      "type": "string"
+    },
+    "mode": {
+      "default": "append",
+      "description": "`overwrite` truncates the table before loading.",
+      "enum": [
+        "append",
+        "overwrite"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "blueprint": {
+      "type": "string",
+      "const": "load_file_to_table",
+      "description": "The blueprint template to use"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The blueprint version"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Steps that must complete before this step runs",
+      "default": []
+    },
+    "trigger_rule": {
+      "type": "string",
+      "enum": [
+        "all_done",
+        "all_done_setup_success",
+        "all_failed",
+        "all_skipped",
+        "all_success",
+        "always",
+        "none_failed",
+        "none_failed_min_one_success",
+        "none_skipped",
+        "one_done",
+        "one_failed",
+        "one_success"
+      ],
+      "description": "Trigger rule for this step (default: all_success)"
+    }
+  },
+  "required": [
+    "blueprint",
+    "version",
+    "conn_id",
+    "source_uri",
+    "target_table"
+  ],
+  "title": "load_file_to_table",
+  "type": "object",
+  "templateType": "blueprint",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
