@@ -10,10 +10,11 @@ apache-airflow-providers-http
 
 # Common AI provider — powers the LLM/agent Blueprints (llm, ai_agent, etc.).
 # Built on Pydantic AI; configure model credentials via pydanticai* connections.
-apache-airflow-providers-common-ai
+# Pinned to a lower bound so a provider refactor can't silently drop blueprints.
+apache-airflow-providers-common-ai>=0.1.0
 # Optional provider deps imported at load time by the AI Blueprints:
 #   sqlglot + datafusion -> llm_sql_query (SQL generation + AST validation)
-sqlglot
+sqlglot>=30.0.0
 datafusion
 # Runtime file-format readers for the llm_file_analysis Blueprint (Parquet/Avro;
 # CSV and JSON need nothing extra). Uncomment pypdf / python-docx for PDF/Word.

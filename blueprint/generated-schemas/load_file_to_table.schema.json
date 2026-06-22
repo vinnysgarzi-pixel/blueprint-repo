@@ -6,7 +6,7 @@
       "type": "string"
     },
     "source_uri": {
-      "description": "Location of the source data, e.g. `s3://my-bucket/path/` or a named stage.",
+      "description": "Object-storage location of the source data, e.g. `s3://my-bucket/path/` or a named stage.",
       "title": "Source Uri",
       "type": "string"
     },
@@ -17,11 +17,10 @@
     },
     "dialect": {
       "default": "snowflake",
-      "description": "Warehouse SQL dialect used to build the COPY statement.",
+      "description": "Warehouse SQL dialect used to build the COPY statement. Both support loading directly from object storage.",
       "enum": [
         "snowflake",
-        "redshift",
-        "postgres"
+        "redshift"
       ],
       "title": "Dialect",
       "type": "string"

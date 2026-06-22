@@ -30,7 +30,7 @@ from airflow.providers.common.ai.operators.llm_schema_compare import (
 )
 from airflow.providers.common.ai.operators.llm_sql import LLMSQLQueryOperator
 
-from blueprint import BaseModel, Blueprint, Field, TaskOrGroup
+from blueprint import BaseModel, Blueprint, Field, TaskOrGroup, model_validator
 
 
 # --- LLM: a single, stateless model call ---------------------------------------
@@ -281,6 +281,19 @@ class LlmSchemaCompareConfig(BaseModel):
     model_id: str | None = Field(
         default=None, description="Override the connection's model."
     )
+
+    @model_validator(mode="after")
+    def _enough_targets(self) -> "LlmSchemaCompareConfig":
+        if not self.db_conn_ids or not self.table_names:
+            raise ValueError(
+                "Provide at least one db_conn_id and one table_name to compare."
+            )
+        if len(self.db_conn_ids) * len(self.table_names) < 2:
+            raise ValueError(
+                "Schema compare needs at least two connection/table combinations "
+                "(e.g. two db_conn_ids, or one db_conn_id with two table_names)."
+            )
+        return self
 
 
 class LlmSchemaCompare(Blueprint[LlmSchemaCompareConfig]):

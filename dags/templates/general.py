@@ -11,11 +11,16 @@ Blueprints:
 
 from __future__ import annotations
 
+import os
+
 from airflow.providers.standard.operators.bash import BashOperator
-from airflow.sdk import task
-from airflow.utils.task_group import TaskGroup
+from airflow.providers.standard.operators.python import PythonOperator
 
 from blueprint import BaseModel, Blueprint, Field, TaskOrGroup
+
+# run_python executes arbitrary code, so it is disabled unless a deployment
+# explicitly opts in via this environment variable.
+_ALLOW_PYTHON_ENV = "BLUEPRINT_ALLOW_ARBITRARY_PYTHON"
 
 
 class RunBashConfig(BaseModel):
@@ -55,16 +60,21 @@ class RunPython(Blueprint[RunPythonConfig]):
     """Run an arbitrary snippet of Python.
 
     The most flexible escape hatch — useful for quick custom logic that does not
-    yet have a dedicated Blueprint. Because it executes arbitrary code, platform
-    teams should only expose this template to trusted authors.
+    yet have a dedicated Blueprint. Because it executes arbitrary code it is
+    **disabled by default**: set ``BLUEPRINT_ALLOW_ARBITRARY_PYTHON=true`` on the
+    deployment to enable it, and only expose it to trusted authors.
     """
 
     def render(self, config: RunPythonConfig) -> TaskOrGroup:
-        with TaskGroup(group_id=self.step_id) as group:
+        if os.environ.get(_ALLOW_PYTHON_ENV, "").lower() not in ("1", "true", "yes"):
+            raise ValueError(
+                "run_python executes arbitrary Python and is disabled by default. "
+                f"Set {_ALLOW_PYTHON_ENV}=true on the deployment to enable it."
+            )
 
-            @task(task_id="run")
-            def run() -> None:
-                exec(config.code, {"__name__": "__blueprint__"})
+        code = config.code
 
-            run()
-        return group
+        def _run() -> None:
+            exec(code, {"__name__": "__blueprint__"})
+
+        return PythonOperator(task_id=self.step_id, python_callable=_run)

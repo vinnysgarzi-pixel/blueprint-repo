@@ -64,6 +64,7 @@ def _install_stubs() -> None:
         "airflow.providers.standard",
         "airflow.providers.standard.operators",
         "airflow.providers.standard.operators.bash",
+        "airflow.providers.standard.operators.python",
         "airflow.providers.standard.sensors",
         "airflow.providers.standard.sensors.filesystem",
         "airflow.providers.common",

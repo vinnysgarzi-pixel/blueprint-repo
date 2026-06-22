@@ -16,7 +16,11 @@ templates of their own.
 | Blueprint (`name`) | Class | What it does | Backed by |
 |---|---|---|---|
 | `run_bash` | `RunBash` | Run a shell command | `BashOperator` |
-| `run_python` | `RunPython` | Run a Python snippet | TaskFlow `@task` |
+| `run_python` | `RunPython` | Run a Python snippet (see note) | `PythonOperator` |
+
+> `run_python` executes arbitrary code and is **disabled by default**. Set
+> `BLUEPRINT_ALLOW_ARBITRARY_PYTHON=true` on the deployment to enable it, and
+> expose it only to trusted authors.
 
 **Ingestion & notifications:**
 
@@ -38,13 +42,17 @@ templates of their own.
 | `sql_interval_check` | `SqlIntervalCheck` | `SQLIntervalCheckOperator` |
 | `sql_threshold_check` | `SqlThresholdCheck` | `SQLThresholdCheckOperator` |
 | `branch_sql` | `BranchSql` | `BranchSQLOperator` |
-| `sql_insert_rows` | `SqlInsertRows` | `SQLInsertRowsOperator` |
 | `generic_transfer` | `GenericTransfer` | `GenericTransfer` |
 | `sql_sensor` | `SqlSensor` | `SqlSensor` |
 
-> Not included: `AnalyticsOperator` — its config is a nested list of datasource
-> objects, which the IDE's flat form fields can't represent. Use a custom
-> template if you need it.
+> Intentionally excluded — these can't be expressed in the declarative,
+> flat-config model the IDE requires:
+> - `AnalyticsOperator` — config is a nested list of datasource objects.
+> - `SQLInsertRowsOperator` — `rows` must be wired as an `XComArg` in Python and
+>   isn't a templated field, so it can't be configured from YAML.
+>
+> `load_file_to_table` supports Snowflake and Redshift only — those are the
+> dialects whose `COPY` can load directly from object storage.
 
 **Common AI provider** (`apache-airflow-providers-common-ai`) — LLM/agent
 operators; each uses a `pydanticai*` connection (`llm_conn_id`) for credentials:
@@ -108,6 +116,23 @@ blueprint describe run_sql      # show a blueprint's config schema
 blueprint lint dags/customer_elt.dag.yaml   # validate a workflow YAML
 ```
 
+## Templating: build-time vs. runtime
+
+Blueprint renders every DAG YAML through Jinja **once, at build/parse time** —
+before Airflow runs anything. Airflow *also* templates operator fields (`sql`,
+`message`, `prompt`, …) **at task runtime**. These two passes share `{{ }}`
+syntax, which is a common footgun:
+
+- Build-time values are fine inline: `{{ var.value.my_var }}`, `{{ env.get('ENV') }}`.
+- Runtime values (`{{ ds }}`, `{{ ti.xcom_pull(...) }}`, `{{ data_interval_start }}`,
+  `{{ dag_run }}`) are **undefined at build time** and will fail the parse. Wrap
+  them in `{% raw %}…{% endraw %}` so Blueprint passes them through for Airflow
+  to resolve per run:
+
+  ```yaml
+  message: "{% raw %}Loaded {{ ti.xcom_pull(task_ids='load') }} rows on {{ ds }}{% endraw %}"
+  ```
+
 ## Design conventions
 
 - **Flat config only.** The IDE renders `str`, `int`, `float`, `bool`,
@@ -117,3 +142,8 @@ blueprint lint dags/customer_elt.dag.yaml   # validate a workflow YAML
   never embed credentials.
 - **Rich field descriptions.** Each `Field(description=...)` becomes the help
   text shown next to the form input in the IDE.
+- **Validated inputs.** Identifiers interpolated into SQL are constrained,
+  destructive options are explicit, and arbitrary-code templates are gated.
+- **Fail loud, not silent.** `tests/dags/test_blueprints.py` asserts the full
+  blueprint inventory still loads, so a missing dependency surfaces as a test
+  failure instead of a vanished template.
