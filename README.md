@@ -18,7 +18,6 @@ templates of their own.
 | `run_sql` | `RunSQL` | Execute SQL against any warehouse | `SQLExecuteQueryOperator` | Yes |
 | `data_quality_check` | `DataQualityCheck` | Row-count / not-null / unique / custom-SQL assertions | `common.sql` check operators | Yes |
 | `load_file_to_table` | `LoadFileToTable` | COPY files from object storage into a table | `SQLExecuteQueryOperator` | Yes |
-| `dbt_build` | `DbtBuild` | Run a dbt command (`build`/`run`/`test`/…) | `BashOperator` + dbt CLI | dbt + adapter |
 | `http_api_extract` | `HttpApiExtract` | Call a REST endpoint, push response to XCom | `HttpOperator` | HTTP conn |
 | `wait_for_file` | `WaitForFile` | Wait for a file to land before continuing | `FileSensor` | fs conn |
 | `send_slack_notification` | `SendSlackNotification` | Post a message to Slack | `SlackWebhookOperator` | Slack conn |
@@ -34,7 +33,6 @@ dags/
   templates/              # Blueprint definitions (Python classes)
     general.py            #   run_bash, run_python
     sql.py               #   run_sql, data_quality_check, load_file_to_table
-    transform.py         #   dbt_build
     ingest.py            #   http_api_extract, wait_for_file
     notify.py            #   send_slack_notification
   loader.py               # build_all_dags() — turns *.dag.yaml into DAGs
