@@ -13,6 +13,7 @@ Blueprints:
 
 from __future__ import annotations
 
+import re
 from typing import Literal
 
 from airflow.providers.common.sql.operators.generic_transfer import (
@@ -23,7 +24,6 @@ from airflow.providers.common.sql.operators.sql import (
     SQLCheckOperator,
     SQLColumnCheckOperator,
     SQLExecuteQueryOperator,
-    SQLInsertRowsOperator,
     SQLIntervalCheckOperator,
     SQLTableCheckOperator,
     SQLThresholdCheckOperator,
@@ -48,14 +48,9 @@ class RunSQLConfig(BaseModel):
         description="Airflow connection ID for the target database, "
         "e.g. `snowflake_default`.",
     )
-    sql: str | None = Field(
-        default=None,
-        description="SQL to run inline. Provide either `sql` or `sql_file`.",
-    )
-    sql_file: str | None = Field(
-        default=None,
-        description="Path to a `.sql` file (resolved via the DAG template "
-        "search path). Provide either `sql` or `sql_file`.",
+    sql: str = Field(
+        description="SQL to run. Multiple statements may be separated by `;` "
+        "(see `split_statements`).",
     )
     autocommit: bool = Field(
         default=True,
@@ -65,12 +60,6 @@ class RunSQLConfig(BaseModel):
         default=True,
         description="Split the SQL on `;` and run each statement separately.",
     )
-
-    @model_validator(mode="after")
-    def _exactly_one_source(self) -> "RunSQLConfig":
-        if bool(self.sql) == bool(self.sql_file):
-            raise ValueError("Provide exactly one of `sql` or `sql_file`.")
-        return self
 
 
 class RunSQL(Blueprint[RunSQLConfig]):
@@ -84,7 +73,7 @@ class RunSQL(Blueprint[RunSQLConfig]):
         return SQLExecuteQueryOperator(
             task_id=self.step_id,
             conn_id=config.conn_id,
-            sql=config.sql or config.sql_file,
+            sql=config.sql,
             autocommit=config.autocommit,
             split_statements=config.split_statements,
         )
@@ -161,13 +150,12 @@ class DataQualityCheck(Blueprint[DataQualityCheckConfig]):
                 column_mapping={config.column: {"null_check": {"equal_to": 0}}},
             )
         if config.check_type == "unique":
+            # unique_check counts duplicate values; equal_to 0 means "no dupes".
             return SQLColumnCheckOperator(
                 task_id=self.step_id,
                 conn_id=config.conn_id,
                 table=config.table,
-                column_mapping={
-                    config.column: {"distinct_check": {"equal_to": "unique"}}
-                },
+                column_mapping={config.column: {"unique_check": {"equal_to": 0}}},
             )
         # custom_sql
         return SQLCheckOperator(
@@ -185,15 +173,16 @@ class LoadFileToTableConfig(BaseModel):
         description="Airflow connection ID for the target warehouse.",
     )
     source_uri: str = Field(
-        description="Location of the source data, e.g. "
+        description="Object-storage location of the source data, e.g. "
         "`s3://my-bucket/path/` or a named stage.",
     )
     target_table: str = Field(
         description="Fully-qualified destination table, e.g. `analytics.orders`.",
     )
-    dialect: Literal["snowflake", "redshift", "postgres"] = Field(
+    dialect: Literal["snowflake", "redshift"] = Field(
         default="snowflake",
-        description="Warehouse SQL dialect used to build the COPY statement.",
+        description="Warehouse SQL dialect used to build the COPY statement. "
+        "Both support loading directly from object storage.",
     )
     file_format: Literal["csv", "parquet", "json"] = Field(
         default="csv",
@@ -204,6 +193,20 @@ class LoadFileToTableConfig(BaseModel):
         description="`overwrite` truncates the table before loading.",
     )
 
+    @model_validator(mode="after")
+    def _validate_identifier(self) -> "LoadFileToTableConfig":
+        # The table name is interpolated into SQL, so constrain it to a plain
+        # (optionally schema-qualified) identifier to prevent SQL injection.
+        if not re.fullmatch(
+            r"[A-Za-z_][A-Za-z0-9_$]*(\.[A-Za-z_][A-Za-z0-9_$]*)*",
+            config_table := self.target_table,
+        ):
+            raise ValueError(
+                f"target_table {config_table!r} must be a plain, optionally "
+                "schema-qualified identifier (e.g. analytics.orders)."
+            )
+        return self
+
 
 class LoadFileToTable(Blueprint[LoadFileToTableConfig]):
     """Load files from object storage into a warehouse table via COPY.
@@ -213,27 +216,24 @@ class LoadFileToTable(Blueprint[LoadFileToTableConfig]):
     """
 
     def _build_sql(self, config: LoadFileToTableConfig) -> str:
+        uri = config.source_uri.replace("'", "''")  # escape the SQL string literal
         statements: list[str] = []
         if config.mode == "overwrite":
             statements.append(f"TRUNCATE TABLE {config.target_table};")
 
         if config.dialect == "snowflake":
             statements.append(
-                f"COPY INTO {config.target_table} FROM '{config.source_uri}' "
+                f"COPY INTO {config.target_table} FROM '{uri}' "
                 f"FILE_FORMAT = (TYPE = '{config.file_format.upper()}');"
             )
-        elif config.dialect == "redshift":
-            fmt = "CSV" if config.file_format == "csv" else config.file_format.upper()
-            statements.append(
-                f"COPY {config.target_table} FROM '{config.source_uri}' "
-                f"FORMAT AS {fmt};"
-            )
-        else:  # postgres
-            fmt = "csv" if config.file_format == "csv" else config.file_format
-            statements.append(
-                f"COPY {config.target_table} FROM '{config.source_uri}' "
-                f"WITH (FORMAT {fmt});"
-            )
+        else:  # redshift
+            if config.file_format == "csv":
+                fmt = "CSV"
+            elif config.file_format == "json":
+                fmt = "JSON 'auto'"
+            else:
+                fmt = "PARQUET"
+            statements.append(f"COPY {config.target_table} FROM '{uri}' FORMAT AS {fmt};")
         return "\n".join(statements)
 
     def render(self, config: LoadFileToTableConfig) -> TaskOrGroup:
@@ -411,42 +411,6 @@ class BranchSql(Blueprint[BranchSqlConfig]):
             sql=config.sql,
             follow_task_ids_if_true=config.follow_task_ids_if_true,
             follow_task_ids_if_false=config.follow_task_ids_if_false,
-        )
-
-
-# --- SQL Insert Rows: insert rows (typically from an upstream task) ------------
-
-
-class SqlInsertRowsConfig(BaseModel):
-    conn_id: str = Field(description="Airflow connection ID for the target database.")
-    table_name: str = Field(description="Destination table name.")
-    rows: str = Field(
-        description="Rows to insert. This field is templated — usually an XCom "
-        "reference resolving to a list of row tuples, e.g. "
-        "`{{ ti.xcom_pull(task_ids='extract') }}`.",
-    )
-    db_schema: str | None = Field(
-        default=None, description="Optional schema for the destination table."
-    )
-    columns: list[str] | None = Field(
-        default=None, description="Optional explicit column names for the insert."
-    )
-
-
-class SqlInsertRows(Blueprint[SqlInsertRowsConfig]):
-    """Insert rows into a table, typically piping data from an upstream task.
-
-    Wraps SQLInsertRowsOperator.
-    """
-
-    def render(self, config: SqlInsertRowsConfig) -> TaskOrGroup:
-        return SQLInsertRowsOperator(
-            task_id=self.step_id,
-            conn_id=config.conn_id,
-            table_name=config.table_name,
-            rows=config.rows,
-            schema=config.db_schema,
-            columns=config.columns,
         )
 
 

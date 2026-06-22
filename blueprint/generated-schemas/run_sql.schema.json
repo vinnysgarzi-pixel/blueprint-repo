@@ -6,30 +6,9 @@
       "type": "string"
     },
     "sql": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "SQL to run inline. Provide either `sql` or `sql_file`.",
-      "title": "Sql"
-    },
-    "sql_file": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "Path to a `.sql` file (resolved via the DAG template search path). Provide either `sql` or `sql_file`.",
-      "title": "Sql File"
+      "description": "SQL to run. Multiple statements may be separated by `;` (see `split_statements`).",
+      "title": "Sql",
+      "type": "string"
     },
     "autocommit": {
       "default": true,
@@ -83,7 +62,8 @@
   "required": [
     "blueprint",
     "version",
-    "conn_id"
+    "conn_id",
+    "sql"
   ],
   "title": "run_sql",
   "type": "object",
