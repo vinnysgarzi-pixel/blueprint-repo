@@ -1,0 +1,102 @@
+{
+  "properties": {
+    "conn_id": {
+      "description": "Airflow connection ID for the database.",
+      "title": "Conn Id",
+      "type": "string"
+    },
+    "table": {
+      "description": "Table the metric is computed over.",
+      "title": "Table",
+      "type": "string"
+    },
+    "metric": {
+      "description": "SQL expression for the metric, e.g. `COUNT(*)` or `SUM(amount)`.",
+      "title": "Metric",
+      "type": "string"
+    },
+    "threshold": {
+      "description": "Max allowed ratio change vs. the comparison period (per `ratio_formula`).",
+      "exclusiveMinimum": 0,
+      "title": "Threshold",
+      "type": "number"
+    },
+    "date_filter_column": {
+      "default": "ds",
+      "description": "Date column used to select each period's rows.",
+      "title": "Date Filter Column",
+      "type": "string"
+    },
+    "days_back": {
+      "default": 7,
+      "description": "How many days back the comparison period is.",
+      "minimum": 1,
+      "title": "Days Back",
+      "type": "integer"
+    },
+    "ratio_formula": {
+      "default": "max_over_min",
+      "description": "How the ratio between periods is computed.",
+      "enum": [
+        "max_over_min",
+        "relative_diff"
+      ],
+      "title": "Ratio Formula",
+      "type": "string"
+    },
+    "ignore_zero": {
+      "default": true,
+      "description": "Ignore rows where the metric is zero.",
+      "title": "Ignore Zero",
+      "type": "boolean"
+    },
+    "blueprint": {
+      "type": "string",
+      "const": "sql_interval_check",
+      "description": "The blueprint template to use"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The blueprint version"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Steps that must complete before this step runs",
+      "default": []
+    },
+    "trigger_rule": {
+      "type": "string",
+      "enum": [
+        "all_done",
+        "all_done_setup_success",
+        "all_failed",
+        "all_skipped",
+        "all_success",
+        "always",
+        "none_failed",
+        "none_failed_min_one_success",
+        "none_skipped",
+        "one_done",
+        "one_failed",
+        "one_success"
+      ],
+      "description": "Trigger rule for this step (default: all_success)"
+    }
+  },
+  "required": [
+    "blueprint",
+    "version",
+    "conn_id",
+    "table",
+    "metric",
+    "threshold"
+  ],
+  "title": "sql_interval_check",
+  "type": "object",
+  "templateType": "blueprint",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

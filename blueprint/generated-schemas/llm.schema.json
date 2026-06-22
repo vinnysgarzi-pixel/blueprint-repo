@@ -1,0 +1,79 @@
+{
+  "properties": {
+    "prompt": {
+      "description": "The user prompt sent to the model. Templated, e.g. `Summarize: {% raw %}{{ ti.xcom_pull(task_ids='fetch') }}{% endraw %}`.",
+      "title": "Prompt",
+      "type": "string"
+    },
+    "llm_conn_id": {
+      "description": "Airflow connection ID for the model provider (a `pydanticai*` connection holding the credentials).",
+      "title": "Llm Conn Id",
+      "type": "string"
+    },
+    "system_prompt": {
+      "default": "",
+      "description": "Optional instructions that steer the model's behavior.",
+      "title": "System Prompt",
+      "type": "string"
+    },
+    "model_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Override the connection's model, e.g. `openai:gpt-5`.",
+      "title": "Model Id"
+    },
+    "blueprint": {
+      "type": "string",
+      "const": "llm",
+      "description": "The blueprint template to use"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The blueprint version"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Steps that must complete before this step runs",
+      "default": []
+    },
+    "trigger_rule": {
+      "type": "string",
+      "enum": [
+        "all_done",
+        "all_done_setup_success",
+        "all_failed",
+        "all_skipped",
+        "all_success",
+        "always",
+        "none_failed",
+        "none_failed_min_one_success",
+        "none_skipped",
+        "one_done",
+        "one_failed",
+        "one_success"
+      ],
+      "description": "Trigger rule for this step (default: all_success)"
+    }
+  },
+  "required": [
+    "blueprint",
+    "version",
+    "prompt",
+    "llm_conn_id"
+  ],
+  "title": "llm",
+  "type": "object",
+  "templateType": "blueprint",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

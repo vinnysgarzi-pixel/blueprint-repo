@@ -7,3 +7,7 @@ airflow-blueprint>=0.2.0
 # (common.sql and standard ship with Astro Runtime.)
 apache-airflow-providers-slack
 apache-airflow-providers-http
+
+# Common AI provider — powers the LLM/agent Blueprints (llm, ai_agent, etc.).
+# Built on Pydantic AI; configure model credentials via pydanticai* connections.
+apache-airflow-providers-common-ai

@@ -11,16 +11,52 @@ templates of their own.
 
 ## What's included
 
-| Blueprint (`name`) | Class | What it does | Backed by | Needs a connection? |
-|---|---|---|---|---|
-| `run_bash` | `RunBash` | Run a shell command | `BashOperator` | No |
-| `run_python` | `RunPython` | Run a Python snippet | TaskFlow `@task` | No |
-| `run_sql` | `RunSQL` | Execute SQL against any warehouse | `SQLExecuteQueryOperator` | Yes |
-| `data_quality_check` | `DataQualityCheck` | Row-count / not-null / unique / custom-SQL assertions | `common.sql` check operators | Yes |
-| `load_file_to_table` | `LoadFileToTable` | COPY files from object storage into a table | `SQLExecuteQueryOperator` | Yes |
-| `http_api_extract` | `HttpApiExtract` | Call a REST endpoint, push response to XCom | `HttpOperator` | HTTP conn |
-| `wait_for_file` | `WaitForFile` | Wait for a file to land before continuing | `FileSensor` | fs conn |
-| `send_slack_notification` | `SendSlackNotification` | Post a message to Slack | `SlackWebhookOperator` | Slack conn |
+**General** (no connection required):
+
+| Blueprint (`name`) | Class | What it does | Backed by |
+|---|---|---|---|
+| `run_bash` | `RunBash` | Run a shell command | `BashOperator` |
+| `run_python` | `RunPython` | Run a Python snippet | TaskFlow `@task` |
+
+**Ingestion & notifications:**
+
+| Blueprint (`name`) | Class | What it does | Backed by |
+|---|---|---|---|
+| `http_api_extract` | `HttpApiExtract` | Call a REST endpoint, push response to XCom | `HttpOperator` |
+| `wait_for_file` | `WaitForFile` | Wait for a file to land before continuing | `FileSensor` |
+| `send_slack_notification` | `SendSlackNotification` | Post a message to Slack | `SlackWebhookOperator` |
+
+**Common SQL provider** — every operator/sensor, provider-agnostic via `conn_id`:
+
+| Blueprint (`name`) | Class | Backed by (`common.sql`) |
+|---|---|---|
+| `run_sql` | `RunSQL` | `SQLExecuteQueryOperator` |
+| `data_quality_check` | `DataQualityCheck` | `SQLColumnCheckOperator` / `SQLTableCheckOperator` / `SQLCheckOperator` |
+| `load_file_to_table` | `LoadFileToTable` | `SQLExecuteQueryOperator` (COPY) |
+| `sql_check` | `SqlCheck` | `SQLCheckOperator` |
+| `sql_value_check` | `SqlValueCheck` | `SQLValueCheckOperator` |
+| `sql_interval_check` | `SqlIntervalCheck` | `SQLIntervalCheckOperator` |
+| `sql_threshold_check` | `SqlThresholdCheck` | `SQLThresholdCheckOperator` |
+| `branch_sql` | `BranchSql` | `BranchSQLOperator` |
+| `sql_insert_rows` | `SqlInsertRows` | `SQLInsertRowsOperator` |
+| `generic_transfer` | `GenericTransfer` | `GenericTransfer` |
+| `sql_sensor` | `SqlSensor` | `SqlSensor` |
+
+> Not included: `AnalyticsOperator` — its config is a nested list of datasource
+> objects, which the IDE's flat form fields can't represent. Use a custom
+> template if you need it.
+
+**Common AI provider** (`apache-airflow-providers-common-ai`) — LLM/agent
+operators; each uses a `pydanticai*` connection (`llm_conn_id`) for credentials:
+
+| Blueprint (`name`) | Class | Backed by (`common.ai`) |
+|---|---|---|
+| `llm` | `Llm` | `LLMOperator` |
+| `ai_agent` | `AiAgent` | `AgentOperator` |
+| `llm_branch` | `LlmBranch` | `LLMBranchOperator` |
+| `llm_sql_query` | `LlmSqlQuery` | `LLMSQLQueryOperator` |
+| `llm_file_analysis` | `LlmFileAnalysis` | `LLMFileAnalysisOperator` |
+| `llm_schema_compare` | `LlmSchemaCompare` | `LLMSchemaCompareOperator` |
 
 The SQL templates use the provider-agnostic `common.sql` package, so a single
 template works against Snowflake, Postgres, Redshift, BigQuery, MySQL, and any
@@ -32,7 +68,8 @@ other DB-API connection — no warehouse-specific variants required.
 dags/
   templates/              # Blueprint definitions (Python classes)
     general.py            #   run_bash, run_python
-    sql.py               #   run_sql, data_quality_check, load_file_to_table
+    sql.py               #   run_sql + all Common SQL operators/sensors
+    ai.py                #   all Common AI (LLM/agent) operators
     ingest.py            #   http_api_extract, wait_for_file
     notify.py            #   send_slack_notification
   loader.py               # build_all_dags() — turns *.dag.yaml into DAGs
@@ -44,8 +81,9 @@ blueprint/
 
 ## Getting started
 
-1. Install dependencies (already listed in `requirements.txt`):
-   `airflow-blueprint>=0.2.0` and `apache-airflow-providers-slack`.
+1. Install dependencies (already listed in `requirements.txt`): `airflow-blueprint`
+   plus the `slack`, `http`, and `common-ai` providers (`common.sql` and
+   `standard` ship with Astro Runtime).
 2. Start Airflow locally with `astro dev start`.
 3. Trigger **`hello_blueprint`** — it needs no connections and proves the wiring
    works end to end.

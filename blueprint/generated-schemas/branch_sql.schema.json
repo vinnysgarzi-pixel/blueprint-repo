@@ -1,0 +1,78 @@
+{
+  "properties": {
+    "conn_id": {
+      "description": "Airflow connection ID for the database.",
+      "title": "Conn Id",
+      "type": "string"
+    },
+    "sql": {
+      "description": "SQL returning a single boolean-ish value used to branch.",
+      "title": "Sql",
+      "type": "string"
+    },
+    "follow_task_ids_if_true": {
+      "description": "Step IDs to run when the query is true.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Follow Task Ids If True",
+      "type": "array"
+    },
+    "follow_task_ids_if_false": {
+      "description": "Step IDs to run when the query is false.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Follow Task Ids If False",
+      "type": "array"
+    },
+    "blueprint": {
+      "type": "string",
+      "const": "branch_sql",
+      "description": "The blueprint template to use"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The blueprint version"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Steps that must complete before this step runs",
+      "default": []
+    },
+    "trigger_rule": {
+      "type": "string",
+      "enum": [
+        "all_done",
+        "all_done_setup_success",
+        "all_failed",
+        "all_skipped",
+        "all_success",
+        "always",
+        "none_failed",
+        "none_failed_min_one_success",
+        "none_skipped",
+        "one_done",
+        "one_failed",
+        "one_success"
+      ],
+      "description": "Trigger rule for this step (default: all_success)"
+    }
+  },
+  "required": [
+    "blueprint",
+    "version",
+    "conn_id",
+    "sql",
+    "follow_task_ids_if_true",
+    "follow_task_ids_if_false"
+  ],
+  "title": "branch_sql",
+  "type": "object",
+  "templateType": "blueprint",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
