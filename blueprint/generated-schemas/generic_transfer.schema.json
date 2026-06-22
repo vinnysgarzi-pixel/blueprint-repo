@@ -1,0 +1,85 @@
+{
+  "properties": {
+    "source_conn_id": {
+      "description": "Connection to read from.",
+      "title": "Source Conn Id",
+      "type": "string"
+    },
+    "destination_conn_id": {
+      "description": "Connection to write to.",
+      "title": "Destination Conn Id",
+      "type": "string"
+    },
+    "destination_table": {
+      "description": "Table to insert the results into.",
+      "title": "Destination Table",
+      "type": "string"
+    },
+    "sql": {
+      "description": "Query run against the source connection.",
+      "title": "Sql",
+      "type": "string"
+    },
+    "preoperator": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional SQL run on the destination before loading, e.g. a TRUNCATE.",
+      "title": "Preoperator"
+    },
+    "blueprint": {
+      "type": "string",
+      "const": "generic_transfer",
+      "description": "The blueprint template to use"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The blueprint version"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Steps that must complete before this step runs",
+      "default": []
+    },
+    "trigger_rule": {
+      "type": "string",
+      "enum": [
+        "all_done",
+        "all_done_setup_success",
+        "all_failed",
+        "all_skipped",
+        "all_success",
+        "always",
+        "none_failed",
+        "none_failed_min_one_success",
+        "none_skipped",
+        "one_done",
+        "one_failed",
+        "one_success"
+      ],
+      "description": "Trigger rule for this step (default: all_success)"
+    }
+  },
+  "required": [
+    "blueprint",
+    "version",
+    "source_conn_id",
+    "destination_conn_id",
+    "destination_table",
+    "sql"
+  ],
+  "title": "generic_transfer",
+  "type": "object",
+  "templateType": "blueprint",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

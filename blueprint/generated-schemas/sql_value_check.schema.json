@@ -1,0 +1,79 @@
+{
+  "properties": {
+    "conn_id": {
+      "description": "Airflow connection ID for the database.",
+      "title": "Conn Id",
+      "type": "string"
+    },
+    "sql": {
+      "description": "SQL returning a single value to check.",
+      "title": "Sql",
+      "type": "string"
+    },
+    "pass_value": {
+      "description": "Expected value. The check passes if the result equals this (within `tolerance`, if set).",
+      "title": "Pass Value",
+      "type": "string"
+    },
+    "tolerance": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional fractional tolerance, e.g. 0.05 allows \u00b15%.",
+      "title": "Tolerance"
+    },
+    "blueprint": {
+      "type": "string",
+      "const": "sql_value_check",
+      "description": "The blueprint template to use"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The blueprint version"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Steps that must complete before this step runs",
+      "default": []
+    },
+    "trigger_rule": {
+      "type": "string",
+      "enum": [
+        "all_done",
+        "all_done_setup_success",
+        "all_failed",
+        "all_skipped",
+        "all_success",
+        "always",
+        "none_failed",
+        "none_failed_min_one_success",
+        "none_skipped",
+        "one_done",
+        "one_failed",
+        "one_success"
+      ],
+      "description": "Trigger rule for this step (default: all_success)"
+    }
+  },
+  "required": [
+    "blueprint",
+    "version",
+    "conn_id",
+    "sql",
+    "pass_value"
+  ],
+  "title": "sql_value_check",
+  "type": "object",
+  "templateType": "blueprint",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

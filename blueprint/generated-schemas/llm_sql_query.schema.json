@@ -1,0 +1,107 @@
+{
+  "properties": {
+    "prompt": {
+      "description": "Natural-language question to turn into a SQL query.",
+      "title": "Prompt",
+      "type": "string"
+    },
+    "llm_conn_id": {
+      "description": "Airflow connection ID for the model provider.",
+      "title": "Llm Conn Id",
+      "type": "string"
+    },
+    "db_conn_id": {
+      "description": "Airflow connection ID for the database the SQL targets.",
+      "title": "Db Conn Id",
+      "type": "string"
+    },
+    "table_names": {
+      "description": "Tables the generated query is allowed to reference.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Table Names",
+      "type": "array"
+    },
+    "dialect": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "SQL dialect for generation/validation, e.g. `postgres`.",
+      "title": "Dialect"
+    },
+    "validate_sql": {
+      "default": true,
+      "description": "Validate generated SQL by parsing its AST (sqlglot).",
+      "title": "Validate Sql",
+      "type": "boolean"
+    },
+    "model_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Override the connection's model.",
+      "title": "Model Id"
+    },
+    "blueprint": {
+      "type": "string",
+      "const": "llm_sql_query",
+      "description": "The blueprint template to use"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The blueprint version"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Steps that must complete before this step runs",
+      "default": []
+    },
+    "trigger_rule": {
+      "type": "string",
+      "enum": [
+        "all_done",
+        "all_done_setup_success",
+        "all_failed",
+        "all_skipped",
+        "all_success",
+        "always",
+        "none_failed",
+        "none_failed_min_one_success",
+        "none_skipped",
+        "one_done",
+        "one_failed",
+        "one_success"
+      ],
+      "description": "Trigger rule for this step (default: all_success)"
+    }
+  },
+  "required": [
+    "blueprint",
+    "version",
+    "prompt",
+    "llm_conn_id",
+    "db_conn_id",
+    "table_names"
+  ],
+  "title": "llm_sql_query",
+  "type": "object",
+  "templateType": "blueprint",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

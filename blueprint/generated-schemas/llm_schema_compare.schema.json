@@ -1,0 +1,101 @@
+{
+  "properties": {
+    "llm_conn_id": {
+      "description": "Airflow connection ID for the model provider.",
+      "title": "Llm Conn Id",
+      "type": "string"
+    },
+    "db_conn_ids": {
+      "description": "Database connection IDs whose schemas are compared.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Db Conn Ids",
+      "type": "array"
+    },
+    "table_names": {
+      "description": "Tables to compare across the given connections.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Table Names",
+      "type": "array"
+    },
+    "context_strategy": {
+      "default": "full",
+      "description": "How much schema context to give the model.",
+      "enum": [
+        "basic",
+        "full"
+      ],
+      "title": "Context Strategy",
+      "type": "string"
+    },
+    "prompt": {
+      "default": "Compare the database schemas and report any mismatches.",
+      "description": "Instruction for the comparison.",
+      "title": "Prompt",
+      "type": "string"
+    },
+    "model_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Override the connection's model.",
+      "title": "Model Id"
+    },
+    "blueprint": {
+      "type": "string",
+      "const": "llm_schema_compare",
+      "description": "The blueprint template to use"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The blueprint version"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Steps that must complete before this step runs",
+      "default": []
+    },
+    "trigger_rule": {
+      "type": "string",
+      "enum": [
+        "all_done",
+        "all_done_setup_success",
+        "all_failed",
+        "all_skipped",
+        "all_success",
+        "always",
+        "none_failed",
+        "none_failed_min_one_success",
+        "none_skipped",
+        "one_done",
+        "one_failed",
+        "one_success"
+      ],
+      "description": "Trigger rule for this step (default: all_success)"
+    }
+  },
+  "required": [
+    "blueprint",
+    "version",
+    "llm_conn_id",
+    "db_conn_ids",
+    "table_names"
+  ],
+  "title": "llm_schema_compare",
+  "type": "object",
+  "templateType": "blueprint",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
