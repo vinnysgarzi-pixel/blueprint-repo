@@ -17,8 +17,10 @@ class SendSlackNotificationConfig(BaseModel):
         description="Airflow connection ID holding the Slack incoming webhook.",
     )
     message: str = Field(
-        description="Message text. Supports Jinja, e.g. "
-        "`Pipeline finished for {{ ds }}`.",
+        description="Message text. For Airflow runtime template vars, wrap them "
+        "in {% raw %}...{% endraw %} so Blueprint's build-time Jinja leaves them "
+        "for Airflow to render per run, e.g. "
+        "`{% raw %}Pipeline finished for {{ ds }}{% endraw %}`.",
     )
     channel: str | None = Field(
         default=None,
