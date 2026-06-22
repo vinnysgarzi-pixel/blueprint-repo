@@ -3,9 +3,10 @@
 # Blueprint framework (powers the no-code DAG authoring UI in the Astro IDE)
 airflow-blueprint>=0.2.0
 
-# Slack provider — used by the send_slack_notification Blueprint.
-# (common.sql, http, and standard providers ship with Astro Runtime.)
+# Providers used by these Blueprints that aren't in the base Runtime image.
+# (common.sql and standard ship with Astro Runtime.)
 apache-airflow-providers-slack
+apache-airflow-providers-http
 
 # Optional: required only if you use the dbt_build Blueprint. Add the adapter
 # that matches your warehouse, e.g. dbt-snowflake / dbt-bigquery / dbt-postgres.
