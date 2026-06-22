@@ -11,3 +11,6 @@ apache-airflow-providers-http
 # Common AI provider — powers the LLM/agent Blueprints (llm, ai_agent, etc.).
 # Built on Pydantic AI; configure model credentials via pydanticai* connections.
 apache-airflow-providers-common-ai
+# sqlglot is an optional dep of the provider, required by the llm_sql_query
+# Blueprint (LLMSQLQueryOperator) for SQL AST validation.
+sqlglot
