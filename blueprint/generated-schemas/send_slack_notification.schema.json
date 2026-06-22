@@ -1,0 +1,86 @@
+{
+  "properties": {
+    "slack_webhook_conn_id": {
+      "default": "slack_default",
+      "description": "Airflow connection ID holding the Slack incoming webhook.",
+      "title": "Slack Webhook Conn Id",
+      "type": "string"
+    },
+    "message": {
+      "description": "Message text. Supports Jinja, e.g. `Pipeline finished for {{ ds }}`.",
+      "title": "Message",
+      "type": "string"
+    },
+    "channel": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Override the channel the webhook posts to (optional).",
+      "title": "Channel"
+    },
+    "username": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Override the display name of the sender (optional).",
+      "title": "Username"
+    },
+    "blueprint": {
+      "type": "string",
+      "const": "send_slack_notification",
+      "description": "The blueprint template to use"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The blueprint version"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Steps that must complete before this step runs",
+      "default": []
+    },
+    "trigger_rule": {
+      "type": "string",
+      "enum": [
+        "all_done",
+        "all_done_setup_success",
+        "all_failed",
+        "all_skipped",
+        "all_success",
+        "always",
+        "none_failed",
+        "none_failed_min_one_success",
+        "none_skipped",
+        "one_done",
+        "one_failed",
+        "one_success"
+      ],
+      "description": "Trigger rule for this step (default: all_success)"
+    }
+  },
+  "required": [
+    "blueprint",
+    "version",
+    "message"
+  ],
+  "title": "send_slack_notification",
+  "type": "object",
+  "templateType": "blueprint",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

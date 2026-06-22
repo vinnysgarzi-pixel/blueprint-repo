@@ -1,0 +1,112 @@
+{
+  "properties": {
+    "conn_id": {
+      "description": "Airflow connection ID for the database to check.",
+      "title": "Conn Id",
+      "type": "string"
+    },
+    "check_type": {
+      "description": "`row_count`: table has at least `min_rows`. `not_null`: `column` has no NULLs. `unique`: `column` has no duplicates. `custom_sql`: `custom_sql` returns a truthy single row.",
+      "enum": [
+        "row_count",
+        "not_null",
+        "unique",
+        "custom_sql"
+      ],
+      "title": "Check Type",
+      "type": "string"
+    },
+    "table": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Fully-qualified table name. Required for row_count, not_null, and unique checks.",
+      "title": "Table"
+    },
+    "column": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Column to check. Required for not_null and unique checks.",
+      "title": "Column"
+    },
+    "min_rows": {
+      "default": 1,
+      "description": "Minimum acceptable row count (row_count check).",
+      "minimum": 0,
+      "title": "Min Rows",
+      "type": "integer"
+    },
+    "custom_sql": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "SQL returning a single row; the check passes if the value is truthy. Required for the custom_sql check.",
+      "title": "Custom Sql"
+    },
+    "blueprint": {
+      "type": "string",
+      "const": "data_quality_check",
+      "description": "The blueprint template to use"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "The blueprint version"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Steps that must complete before this step runs",
+      "default": []
+    },
+    "trigger_rule": {
+      "type": "string",
+      "enum": [
+        "all_done",
+        "all_done_setup_success",
+        "all_failed",
+        "all_skipped",
+        "all_success",
+        "always",
+        "none_failed",
+        "none_failed_min_one_success",
+        "none_skipped",
+        "one_done",
+        "one_failed",
+        "one_success"
+      ],
+      "description": "Trigger rule for this step (default: all_success)"
+    }
+  },
+  "required": [
+    "blueprint",
+    "version",
+    "conn_id",
+    "check_type"
+  ],
+  "title": "data_quality_check",
+  "type": "object",
+  "templateType": "blueprint",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

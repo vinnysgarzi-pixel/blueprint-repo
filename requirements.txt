@@ -1,0 +1,13 @@
+# Astro Runtime includes the following pre-installed providers packages: https://www.astronomer.io/docs/astro/runtime-image-architecture#provider-packages
+
+# Blueprint framework (powers the no-code DAG authoring UI in the Astro IDE)
+airflow-blueprint>=0.2.0
+
+# Slack provider — used by the send_slack_notification Blueprint.
+# (common.sql, http, and standard providers ship with Astro Runtime.)
+apache-airflow-providers-slack
+
+# Optional: required only if you use the dbt_build Blueprint. Add the adapter
+# that matches your warehouse, e.g. dbt-snowflake / dbt-bigquery / dbt-postgres.
+# dbt-core
+# dbt-snowflake

@@ -1,0 +1,46 @@
+dag_id: customer_elt
+schedule: "@daily"
+
+# A realistic ELT loop composed entirely from out-of-the-box Blueprints:
+#   wait for data -> load -> transform -> validate -> notify.
+# Update the conn_ids, table names, and URIs to match your environment.
+steps:
+  wait_for_orders:
+    blueprint: wait_for_file
+    filepath: "incoming/orders_*.csv"
+    fs_conn_id: fs_default
+
+  load_orders:
+    blueprint: load_file_to_table
+    depends_on: [wait_for_orders]
+    conn_id: snowflake_default
+    source_uri: "s3://acme-data/incoming/orders/"
+    target_table: raw.orders
+    dialect: snowflake
+    file_format: csv
+    mode: overwrite
+
+  transform_orders:
+    blueprint: run_sql
+    depends_on: [load_orders]
+    conn_id: snowflake_default
+    sql: >
+      INSERT INTO analytics.daily_orders
+      SELECT order_date, COUNT(*) AS order_count, SUM(amount) AS revenue
+      FROM raw.orders
+      GROUP BY order_date;
+
+  validate_orders:
+    blueprint: data_quality_check
+    depends_on: [transform_orders]
+    conn_id: snowflake_default
+    check_type: row_count
+    table: analytics.daily_orders
+    min_rows: 1
+
+  notify:
+    blueprint: send_slack_notification
+    depends_on: [validate_orders]
+    trigger_rule: all_done
+    slack_webhook_conn_id: slack_default
+    message: "customer_elt finished for {{ ds }} (status: {{ dag_run.get_state() }})"
