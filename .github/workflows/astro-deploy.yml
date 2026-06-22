@@ -1,0 +1,23 @@
+name: Astro Deploy
+
+# Auto-deploy to the "blueprint-repo" Astro deployment on every push to main.
+# Authenticated with the ASTRO_API_TOKEN repository secret (a DEPLOYMENT_ADMIN
+# token scoped to deployment cmqpdxpbg9aqp01r0q4ds8u22).
+on:
+  push:
+    branches: [main]
+
+env:
+  ASTRO_API_TOKEN: ${{ secrets.ASTRO_API_TOKEN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Astro
+        uses: astronomer/deploy-action@v0
+        with:
+          deployment-id: cmqpdxpbg9aqp01r0q4ds8u22
